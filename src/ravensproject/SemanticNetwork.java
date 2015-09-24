@@ -42,9 +42,11 @@ public class SemanticNetwork {
     }
 
     /**
+     * Todo - make this not weird looking
      * This method is for debugging purposes. It is used to
      * view a string representation of the semantic network.
      */
+    @Override
     public String toString() {
         String semanticNetworkString = "";
         for(String obj : semanticMap.keySet()) {

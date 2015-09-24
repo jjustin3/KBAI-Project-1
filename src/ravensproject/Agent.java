@@ -67,15 +67,14 @@ public class Agent {
         System.out.println("PROBLEM "+problem.getName()+":");
 
         Map<String, RavensFigure> figureMap = problem.getFigures();
-        List<Map<String, SemanticNetwork>> semanticList = new ArrayList<>();
+        Map<String, SemanticNetwork> semanticMap = new HashMap<>();
         for(String fig : figureMap.keySet()) {
-            Map<String, SemanticNetwork> semanticMap = buildSemanticNetwork(figureMap.get(fig));
-            //System.out.println(semanticMap.toString());
-            semanticList.add(semanticMap);
+            semanticMap.put(fig, buildSemanticNetwork(figureMap.get(fig)));
         }
+        System.out.println(semanticMap.toString());
 
         Map<String, List<String>> adjacencyMap = determineFigureAdjacency(figureMap);
-        compareAdjacentFigures(figureMap, adjacencyMap, semanticList);
+        compareAdjacentFigures(figureMap, adjacencyMap, semanticMap);
         //compareSemanticNetworks();
 
         /*
@@ -89,8 +88,7 @@ public class Agent {
         return -1;
     }
 
-    public Map<String, SemanticNetwork> buildSemanticNetwork(RavensFigure figure) {
-        Map<String, SemanticNetwork> semanticMap = new HashMap<>();
+    public SemanticNetwork buildSemanticNetwork(RavensFigure figure) {
 
         SemanticNetwork semanticNetwork = new SemanticNetwork();
         Map<String, RavensObject> objectMap = figure.getObjects();
@@ -98,10 +96,7 @@ public class Agent {
             semanticNetwork.addObject(objectMap.get(obj));
         }
 
-        semanticMap.put(figure.getName(), semanticNetwork);
-        //System.out.println(semanticNetwork.toString());
-
-        return semanticMap;
+        return semanticNetwork;
     }
 
     public Map<String, List<String>> determineFigureAdjacency(Map<String, RavensFigure> figureMap) {
@@ -139,15 +134,22 @@ public class Agent {
      *
      * @param figureMap
      * @param adjacencyMap
-     * @param semanticList
+     * @param semanticMap
      * @return
      */
     public boolean compareAdjacentFigures(
             Map<String, RavensFigure> figureMap,
             Map<String, List<String>> adjacencyMap,
-            List<Map<String, SemanticNetwork>> semanticList) {
+            Map<String, SemanticNetwork> semanticMap) {
 
-        
+        for(String fig : adjacencyMap.keySet()) {
+            for(String comp : adjacencyMap.get(fig)) {
+                //Todo - compare objects in adjacent figures and compare semantic networks
+
+                //semanticList.get(semanticList.);
+                //System.out.println(fig+" : "+comp);
+            }
+        }
 
         return false;
     }
