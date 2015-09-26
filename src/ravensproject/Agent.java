@@ -21,6 +21,9 @@ import java.util.*;
  * 
  */
 public class Agent {
+
+    private Generator generator;
+
     /**
      * The default constructor for your Agent. Make sure to execute any
      * processing necessary before your Agent starts solving problems here.
@@ -30,9 +33,7 @@ public class Agent {
      * 
      */
     public Agent() {
-
-
-
+        generator = new Generator();
     }
     /**
      * The primary method for solving incoming Raven's Progressive Matrices.
@@ -61,105 +62,225 @@ public class Agent {
      */
     public int Solve(RavensProblem problem) {
 
-        int cols = Integer.parseInt(problem.getProblemType().substring(0, 1));
-        int rows = cols;
+        System.out.println("Analyzing: "+problem.getName());
 
-        System.out.println("PROBLEM "+problem.getName()+":");
+        // Array for potential answers
+        List<RavensFigure> answers = new ArrayList<>();
 
-        Map<String, RavensFigure> figureMap = problem.getFigures();
-        Map<String, SemanticNetwork> semanticMap = new HashMap<>();
-        for(String fig : figureMap.keySet()) {
-            semanticMap.put(fig, buildSemanticNetwork(figureMap.get(fig)));
-        }
-        System.out.println(semanticMap.toString());
+        // Todo - don't hardcode this for 2x2... make dynamic
+        // Retrieve figures from problem
+        RavensFigure figA = problem.getFigures().get("A");
+        RavensFigure figB = problem.getFigures().get("B");
+        RavensFigure figC = problem.getFigures().get("C");
+        RavensFigure fig1 = problem.getFigures().get("1");
+        RavensFigure fig2 = problem.getFigures().get("2");
+        RavensFigure fig3 = problem.getFigures().get("3");
+        RavensFigure fig4 = problem.getFigures().get("4");
+        RavensFigure fig5 = problem.getFigures().get("5");
+        RavensFigure fig6 = problem.getFigures().get("6");
 
-        Map<String, List<String>> adjacencyMap = determineFigureAdjacency(figureMap);
-        compareAdjacentFigures(figureMap, adjacencyMap, semanticMap);
-        //compareSemanticNetworks();
+        // Determine relationships between objects in figures
+        Map<String, List<String>>  figAtoFigB = formRelationships(figA, figB, null);
+        Map<String, List<String>>  figCtoFig1 = formRelationships(figC, fig1, figAtoFigB);
+        Map<String, List<String>>  figCtoFig2 = formRelationships(figC, fig2, figAtoFigB);
+        Map<String, List<String>>  figCtoFig3 = formRelationships(figC, fig3, figAtoFigB);
+        Map<String, List<String>>  figCtoFig4 = formRelationships(figC, fig4, figAtoFigB);
+        Map<String, List<String>>  figCtoFig5 = formRelationships(figC, fig5, figAtoFigB);
+        Map<String, List<String>>  figCtoFig6 = formRelationships(figC, fig6, figAtoFigB);
 
-        /*
-        Step 1: loop through and create semantic network for each figure
-        Step 2: compare semantic networks to find relations between figures
-            --> create map of relations
-        Step 3: create map of changes between figures based on metrics
-        Step 4:
-         */
+        // Store relationships between C and solutions to map
+        Map<String, Map<String, List<String>>> solutions = new HashMap<>();
+        solutions.put("1", figCtoFig1);
+        solutions.put("2", figCtoFig2);
+        solutions.put("3", figCtoFig3);
+        solutions.put("4", figCtoFig4);
+        solutions.put("5", figCtoFig5);
+        solutions.put("6", figCtoFig6);
+
+        // Determine transformations
+
 
         return -1;
     }
 
-    public SemanticNetwork buildSemanticNetwork(RavensFigure figure) {
+    public Map<String, List<String>> formRelationships(RavensFigure figure1,
+                                                 RavensFigure figure2,
+                                                 Map<String, List<String>> comparison) {
 
-        SemanticNetwork semanticNetwork = new SemanticNetwork();
-        Map<String, RavensObject> objectMap = figure.getObjects();
-        for(String obj : objectMap.keySet()) {
-            semanticNetwork.addObject(objectMap.get(obj));
+        // Retrieve figure1's objects and figure2's objects for comparison
+        HashMap<String, RavensObject> figure1Objects = figure1.getObjects();
+        HashMap<String, RavensObject> figure2Objects = figure2.getObjects();
+
+        // Compare number of objects in each figure
+        List<String> figure1Names = new ArrayList<>(figure1Objects.keySet());
+        List<String> figure2Names = new ArrayList<>(figure2Objects.keySet());
+        while (figure1Names.size() != figure2Names.size()) {
+            if (figure1Names.size() > figure2Names.size())
+                figure2Names.add(null);
+            else if (figure1Names.size() < figure2Names.size()) {
+                figure1Names.add(null);
+            }
         }
 
-        return semanticNetwork;
+        // Get all permutations of figure2 for comparison to figure1
+//        List<List<String>> figure2Permutations = generatePermutations(figure2Names);
+        List<List<String>> figure2Permutations = generator.generatePermutations(figure2Names);
+
+        int bestScore = 0;
+        Map<String, List<String>> bestRelationships = new HashMap<>();
+        for (List<String> permutation : figure2Permutations) {
+            int score = 0;
+            // Todo - make second string a list of strings to avoid overwriting
+            Map<String, List<String>> relationships = new HashMap<>();
+
+            for (List<String> pair : (List<List<String>>)generator.formPairs(figure1Names, permutation)) {
+                RavensObject fig1Object = figure1Objects.get(pair.get(0));
+                RavensObject fig2Object = figure2Objects.get(pair.get(1));
+                List<String> fig1AttrList = new ArrayList<>();
+                List<String> fig2AttrList = new ArrayList<>();
+
+                if (fig1Object == null && fig2Object != null)
+                    fig2AttrList.add("added");
+                else if (fig1Object != null && fig2Object == null)
+                    fig1AttrList.add("deleted");
+                else if (fig1Object != null && fig2Object != null) {
+                    HashMap<String, String> fig1Attributes = fig1Object.getAttributes();
+                    HashMap<String, String> fig2Attributes = fig2Object.getAttributes();
+
+                    if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
+                        score += 5;
+                        fig2AttrList.add("sameShape");
+                    } else
+                        fig2AttrList.add("diffShape");
+
+                    if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
+                        score += 5;
+                        fig2AttrList.add("sameSize");
+                    } else {
+                        score += 2;
+                        fig2AttrList.add("diffSize");
+                    }
+
+                    if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
+                        score += 5;
+                        fig2AttrList.add("sameFill");
+                    } else {
+                        score += 2;
+                        fig2AttrList.add("diffFill");
+                    }
+
+                    // Todo - move this to compareAttributes
+//                    int fig1Angle = fig1Attributes.get("angle") != null
+//                            ? Integer.parseInt(fig1Attributes.get("angle")) : 0;
+//                    int fig2Angle = fig2Attributes.get("angle") != null
+//                            ? Integer.parseInt(fig2Attributes.get("angle")) : 0;
+//                    if (fig1Attributes.get("shape").equals("circle") && fig2Attributes.get("shape").equals("circle"))
+
+                }
+
+                if (fig1Object != null && !fig1AttrList.isEmpty())
+                    relationships.put(fig1Object.getName(), fig1AttrList);
+                if (fig2Object != null && !fig2AttrList.isEmpty())
+                    relationships.put(fig2Object.getName(), fig2AttrList);
+            }
+
+            // Todo - check if this works (probably doesn't) --> make a comparison function (check if comparison is null)
+            if (relationships == comparison)
+                score += 100;
+            if (score > bestScore) {
+                bestRelationships = relationships;
+                bestScore = score;
+
+            }
+
+        }
+
+        return bestRelationships;
     }
 
-    public Map<String, List<String>> determineFigureAdjacency(Map<String, RavensFigure> figureMap) {
-        Map<String, List<String>> adjacencyMap = new HashMap<>();
+    // Todo - implement this comparison
+    public boolean compareRelationships(Map<String, List<String>> relationship1,
+                                        Map<String, List<String>> relationship2) {
 
-        // A list to store figures related to problem and not solution (i.e. A, B, C,...)
-        // Only used as a "look-up" reference by name... doesn't actually store RavensFigures
-        List<String> figureList = new ArrayList<>();
-        for(String fig : figureMap.keySet()) {
-            if(fig.matches("[A-Z]")) {
-                figureList.add(fig);
-            }
+        if(relationship1 != null && relationship2 != null) {
+            List<List<String>> rel1Values = new ArrayList<>(relationship1.values());
+            List<List<String>> rel2Values = new ArrayList<>(relationship2.values());
+            List<String> names = new ArrayList<>(relationship1.keySet());
+            names.addAll(relationship2.keySet());
+
+
         }
-
-        Collections.sort(figureList);
-
-        // Form adjacency between figures to add to map
-        // This should work for all 2x2 and 3x3
-        int size = (int) Math.sqrt(figureList.size() + 1);
-        for(int i = 0; i < figureList.size() - size; i++) {
-            List<String> tempList = new ArrayList<>();
-            if(i % size != 0 || i < size - 1) {
-                tempList.add(figureList.get(i + 1));
-            }
-            tempList.add(figureList.get(i + size));
-            adjacencyMap.put(figureList.get(i), tempList);
-        }
-
-        return adjacencyMap;
-    }
-
-    /**
-     * This method is used for determining the relationship between objects in the problem
-     * figures, not analyze the solution figures.
-     *
-     * @param figureMap
-     * @param adjacencyMap
-     * @param semanticMap
-     * @return
-     */
-    public boolean compareAdjacentFigures(
-            Map<String, RavensFigure> figureMap,
-            Map<String, List<String>> adjacencyMap,
-            Map<String, SemanticNetwork> semanticMap) {
-
-        for(String fig : adjacencyMap.keySet()) {
-            for(String comp : adjacencyMap.get(fig)) {
-                //Todo - compare objects in adjacent figures and compare semantic networks
-
-                //semanticList.get(semanticList.);
-                //System.out.println(fig+" : "+comp);
-            }
-        }
-
         return false;
     }
 
 
 
-}
+    /**
+     * This method compares the attributes of each figure. The point is to pull this
+     * logic out of the main algorithm because it is repeated so much.
+     *
+     * @param fig1Attributes
+     * @param fig2Attributes
+     * @param attribute
+     * @return Whether or not the attributes are the same
+     */
+    public boolean compareAttributes (HashMap<String, String> fig1Attributes,
+                                  HashMap<String, String> fig2Attributes,
+                                  String attribute) {
 
-/*
-Todo:
-- maybe make a object class so attributes are easier to compare
-- maybe make a figure class so semantic networks of figures are easier to compare
- */
+        String fig1Attribute = fig1Attributes.get(attribute);
+        String fig2Attribute = fig2Attributes.get(attribute);
+        if(fig1Attribute != null && fig2Attribute != null)
+            if (fig1Attribute.equals(fig2Attribute))
+                return true;
+        return false;
+    }
+
+    /**
+     * This method generates all permutations for the provided list. This is primarily
+     * used for object comparison such that each object list can be compared to all
+     * possible objects lists of the figure from which a comparison is being made.
+     *
+     * @param original
+     * @return The list of permutations
+     */
+//    public List<List<String>> generatePermutations(List<String> original) {
+//        if (original.size() == 0) {
+//            List<List<String>> result = new ArrayList<>();
+//            result.add(new ArrayList<String>());
+//            return result;
+//        }
+//        String firstElement = original.remove(0);
+//        List<List<String>> permutationList = new ArrayList<>();
+//        List<List<String>> permutations = generatePermutations(original);
+//        for (List<String> smaller : permutations) {
+//            for (int index=0; index <= smaller.size(); index++) {
+//                List<String> temp = new ArrayList<>(smaller);
+//                temp.add(index, firstElement);
+//                permutationList.add(temp);
+//            }
+//        }
+//        return permutationList;
+//    }
+
+    /**
+     * This method forms pairs between elements of two arrays and returns a list of such
+     * of said pairs.
+     *
+     * @param list1
+     * @param list2
+     * @return The list of pairs
+     */
+//    public List<List<String>> formPairs(List<String> list1, List<String> list2) {
+//        // Todo - check to see if lists are same size. If not --> exception.
+//        List<List<String>> pairList = new ArrayList<>();
+//        for (int i = 0; i < list1.size(); i++) {
+//            List<String> pair = new ArrayList<>();
+//            pair.add(list1.get(i));
+//            pair.add(list2.get(i));
+//            pairList.add(pair);
+//        }
+//
+//        return pairList;
+//    }
+}
