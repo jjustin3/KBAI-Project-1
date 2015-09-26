@@ -65,7 +65,7 @@ public class Agent {
         System.out.println("Analyzing: "+problem.getName());
 
         // Array for potential answers
-        List<RavensFigure> answers = new ArrayList<>();
+        List<String> answers = new ArrayList<>();
 
         // Todo - don't hardcode this for 2x2... make dynamic
         // Retrieve figures from problem
@@ -97,8 +97,28 @@ public class Agent {
         solutions.put("5", figCtoFig5);
         solutions.put("6", figCtoFig6);
 
-        // Determine transformations
+        // Determine transformations between figures
+        Map<String, Integer> scores = new HashMap<>();
+        List<String> solList = new ArrayList<>(solutions.keySet());
+        for (String sol : solList) {
+            scores.put(sol, 0);
+            for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
+                    new ArrayList<>(figAtoFigB.values()),
+                    new ArrayList<>(solutions.get(sol).values()))
+                    ) {
 
+//                System.out.println("Solution "+sol+": "+generator.intersection(pair.get(0), pair.get(1)));
+                int tempScore = scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
+                scores.put(sol, tempScore);
+            }
+        }
+
+        for (String sol : solList) {
+            if (scores.get(sol).equals(Collections.max(scores.values())))
+                answers.add(sol);
+        }
+
+        System.out.println(answers);
 
         return -1;
     }
@@ -123,14 +143,12 @@ public class Agent {
         }
 
         // Get all permutations of figure2 for comparison to figure1
-//        List<List<String>> figure2Permutations = generatePermutations(figure2Names);
         List<List<String>> figure2Permutations = generator.generatePermutations(figure2Names);
 
         int bestScore = 0;
         Map<String, List<String>> bestRelationships = new HashMap<>();
         for (List<String> permutation : figure2Permutations) {
             int score = 0;
-            // Todo - make second string a list of strings to avoid overwriting
             Map<String, List<String>> relationships = new HashMap<>();
 
             for (List<String> pair : (List<List<String>>)generator.formPairs(figure1Names, permutation)) {
@@ -176,6 +194,8 @@ public class Agent {
 //                            ? Integer.parseInt(fig2Attributes.get("angle")) : 0;
 //                    if (fig1Attributes.get("shape").equals("circle") && fig2Attributes.get("shape").equals("circle"))
 
+                    // Todo - alignment, angle
+
                 }
 
                 if (fig1Object != null && !fig1AttrList.isEmpty())
@@ -192,6 +212,7 @@ public class Agent {
                 bestScore = score;
 
             }
+            //compareRelationships(relationships, comparison);
 
         }
 
@@ -205,9 +226,17 @@ public class Agent {
         if(relationship1 != null && relationship2 != null) {
             List<List<String>> rel1Values = new ArrayList<>(relationship1.values());
             List<List<String>> rel2Values = new ArrayList<>(relationship2.values());
-            List<String> names = new ArrayList<>(relationship1.keySet());
-            names.addAll(relationship2.keySet());
-
+            List<List<List<String>>> permutations = generator.generatePermutations(rel2Values);
+//            System.out.println(permutations);
+            for (List<List<String>> permutation : permutations) {
+                boolean same = true;
+                for (int i = 0; i < rel1Values.size(); i++) {
+                    if (!rel1Values.get(i).equals(permutation.get(i)))
+                        same = false;
+                    else
+                        System.out.println(rel1Values + " ::: " + permutation);
+                }
+            }
 
         }
         return false;
@@ -235,52 +264,4 @@ public class Agent {
                 return true;
         return false;
     }
-
-    /**
-     * This method generates all permutations for the provided list. This is primarily
-     * used for object comparison such that each object list can be compared to all
-     * possible objects lists of the figure from which a comparison is being made.
-     *
-     * @param original
-     * @return The list of permutations
-     */
-//    public List<List<String>> generatePermutations(List<String> original) {
-//        if (original.size() == 0) {
-//            List<List<String>> result = new ArrayList<>();
-//            result.add(new ArrayList<String>());
-//            return result;
-//        }
-//        String firstElement = original.remove(0);
-//        List<List<String>> permutationList = new ArrayList<>();
-//        List<List<String>> permutations = generatePermutations(original);
-//        for (List<String> smaller : permutations) {
-//            for (int index=0; index <= smaller.size(); index++) {
-//                List<String> temp = new ArrayList<>(smaller);
-//                temp.add(index, firstElement);
-//                permutationList.add(temp);
-//            }
-//        }
-//        return permutationList;
-//    }
-
-    /**
-     * This method forms pairs between elements of two arrays and returns a list of such
-     * of said pairs.
-     *
-     * @param list1
-     * @param list2
-     * @return The list of pairs
-     */
-//    public List<List<String>> formPairs(List<String> list1, List<String> list2) {
-//        // Todo - check to see if lists are same size. If not --> exception.
-//        List<List<String>> pairList = new ArrayList<>();
-//        for (int i = 0; i < list1.size(); i++) {
-//            List<String> pair = new ArrayList<>();
-//            pair.add(list1.get(i));
-//            pair.add(list2.get(i));
-//            pairList.add(pair);
-//        }
-//
-//        return pairList;
-//    }
 }

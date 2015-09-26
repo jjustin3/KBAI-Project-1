@@ -44,9 +44,20 @@ public class Generator<E> {
             pair.add(list1.get(i));
             pair.add(list2.get(i));
             pairList.add(pair);
-            System.out.println(pairList);
         }
 
         return pairList;
+    }
+
+    public <E> List<E> intersection(List<E> list1, List<E> list2) {
+        List<E> list = new ArrayList<>();
+
+        for (E element : list1) {
+            if(list2.contains(element)) {
+                list.add(element);
+            }
+        }
+
+        return list;
     }
 }
