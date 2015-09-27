@@ -89,43 +89,104 @@ public class Agent {
         Map<String, List<String>>  figCtoFig6 = formRelationships(figC, fig6, figAtoFigB);
 
         // Store relationships between C and solutions to map
-        Map<String, Map<String, List<String>>> solutions = new HashMap<>();
-        solutions.put("1", figCtoFig1);
-        solutions.put("2", figCtoFig2);
-        solutions.put("3", figCtoFig3);
-        solutions.put("4", figCtoFig4);
-        solutions.put("5", figCtoFig5);
-        solutions.put("6", figCtoFig6);
+        Map<String, Map<String, List<String>>> step1sols = new HashMap<>();
+        step1sols.put("1", figCtoFig1);
+        step1sols.put("2", figCtoFig2);
+        step1sols.put("3", figCtoFig3);
+        step1sols.put("4", figCtoFig4);
+        step1sols.put("5", figCtoFig5);
+        step1sols.put("6", figCtoFig6);
 
         // Determine transformations between figures
-        Map<String, Integer> scores = new HashMap<>();
-        List<String> solList = new ArrayList<>(solutions.keySet());
-        for (String sol : solList) {
-            scores.put(sol, 0);
+        int figAtoFigBDiff = figB.getObjects().keySet().size() - figA.getObjects().keySet().size(); //Todo
+        Map<String, Integer> step1Scores = new HashMap<>();
+        List<String> sol1List = new ArrayList<>(step1sols.keySet());
+        for (String sol : sol1List) {
+            step1Scores.put(sol, 0);
+
+            // Todo - this should go somewhere near the pair formation
+            // i.e. B-12 --> I don't analyze elements of an array at indices
+            // greater than the array being compared to (misses some pairings)
+            int figCtoSolDiff = problem.getFigures().get(sol).getObjects().keySet().size()
+                    - figC.getObjects().keySet().size(); //Todo
+
+            // Todo - ensure this works for given scores!
+            if (problem.getName().equals("Basic Problem B-12"))
+//                System.out.println("AtoB: "+figAtoFigBDiff+" , Cto"+sol+": "+figCtoSolDiff);
+            if (figAtoFigBDiff == figCtoSolDiff)
+                step1Scores.put(sol, Math.abs(figCtoSolDiff) + 2);
+
             for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
                     new ArrayList<>(figAtoFigB.values()),
-                    new ArrayList<>(solutions.get(sol).values()))
-                    ) {
+                    new ArrayList<>(step1sols.get(sol).values()))) {
 
-//                System.out.println("Solution "+sol+": "+generator.intersection(pair.get(0), pair.get(1)));
-                int tempScore = scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
-                scores.put(sol, tempScore);
+                int tempScore = step1Scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
+                step1Scores.put(sol, tempScore);
             }
         }
 
-        for (String sol : solList) {
-            if (scores.get(sol).equals(Collections.max(scores.values())))
+        for (String sol : sol1List) {
+//            if (problem.getName().equals("Basic Problem B-12"))
+//                System.out.println("Sol"+sol+" points: "+step1Scores.get(sol));
+            if (step1Scores.get(sol).equals(Collections.max(step1Scores.values())))
                 answers.add(sol);
         }
 
-        System.out.println(answers);
+        System.out.println("Answers at step 1: "+answers);
+
+        //Todo
+        if (answers.size() > 1) {
+//            List<String> figBLocations = getLocations(figB);
+//            List<String> fig1Locations = getLocations(fig1);
+//            List<String> fig2Locations = getLocations(fig2);
+//            List<String> fig3Locations = getLocations(fig3);
+//            List<String> fig4Locations = getLocations(fig4);
+//            List<String> fig5Locations = getLocations(fig5);
+//            List<String> fig6Locations = getLocations(fig6);
+//
+//            Map<String, List<String>> step2sols = new HashMap<>();
+//            step2sols.put("1", fig1Locations);
+//            step2sols.put("2", fig2Locations);
+//            step2sols.put("3", fig3Locations);
+//            step2sols.put("4", fig4Locations);
+//            step2sols.put("5", fig5Locations);
+//            step2sols.put("6", fig6Locations);
+//
+//            List<String> sol2List = new ArrayList<>(step2sols.keySet());
+//            for (String sol : sol2List) {
+//              List<String> ansFigLocations = getLocations(problem.getFigures().get(ans));
+//                int tempScore = generator.intersection(figBLocations, ansFigLocations).size();
+//                step2Scores.put(ans, tempScore);
+//            }
+//            for (String sol : answers)
+//                if (step2Scores.get(sol) < Collections.max(step2Scores.values()))
+//                    answers.remove(sol);
+            
+
+            List<String> figBLocations = getLocations(figB);
+            Map<String, Integer> step2Scores = new HashMap<>();
+            for (String ans : answers) {
+                List<String> ansFigLocations = getLocations(problem.getFigures().get(ans));
+                int tempScore = generator.intersection(figBLocations, ansFigLocations).size();
+                step2Scores.put(ans, tempScore);
+            }
+
+            for (String sol : answers)
+                if (step2Scores.get(sol) < Collections.max(step2Scores.values()))
+                    answers.remove(sol);
+
+        }
+
+        System.out.println("Answers at step 2: "+answers);
+
+
 
         return -1;
     }
 
     public Map<String, List<String>> formRelationships(RavensFigure figure1,
-                                                 RavensFigure figure2,
-                                                 Map<String, List<String>> comparison) {
+                                                       RavensFigure figure2,
+                                                       Map<String, List<String>> comparison) {
 
         // Retrieve figure1's objects and figure2's objects for comparison
         HashMap<String, RavensObject> figure1Objects = figure1.getObjects();
@@ -149,8 +210,8 @@ public class Agent {
         Map<String, List<String>> bestRelationships = new HashMap<>();
         for (List<String> permutation : figure2Permutations) {
             int score = 0;
-            Map<String, List<String>> relationships = new HashMap<>();
 
+            Map<String, List<String>> relationships = new HashMap<>();
             for (List<String> pair : (List<List<String>>)generator.formPairs(figure1Names, permutation)) {
                 RavensObject fig1Object = figure1Objects.get(pair.get(0));
                 RavensObject fig2Object = figure2Objects.get(pair.get(1));
@@ -168,13 +229,13 @@ public class Agent {
                     if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
                         score += 5;
                         fig2AttrList.add("sameShape");
-                    } else
+                    } else if(fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
                         fig2AttrList.add("diffShape");
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
                         score += 5;
                         fig2AttrList.add("sameSize");
-                    } else {
+                    } else if(fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
                         score += 2;
                         fig2AttrList.add("diffSize");
                     }
@@ -182,19 +243,29 @@ public class Agent {
                     if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
                         score += 5;
                         fig2AttrList.add("sameFill");
-                    } else {
+                    } else if(fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
                         score += 2;
                         fig2AttrList.add("diffFill");
                     }
 
-                    // Todo - move this to compareAttributes
-//                    int fig1Angle = fig1Attributes.get("angle") != null
-//                            ? Integer.parseInt(fig1Attributes.get("angle")) : 0;
-//                    int fig2Angle = fig2Attributes.get("angle") != null
-//                            ? Integer.parseInt(fig2Attributes.get("angle")) : 0;
-//                    if (fig1Attributes.get("shape").equals("circle") && fig2Attributes.get("shape").equals("circle"))
+                    if (compareAttributes(fig1Attributes, fig2Attributes, "alignment")) {
+                        score += 5;
+                        fig2AttrList.add("sameAlignment");
+                    } else if(fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
+                        score += 2;
+                        fig2AttrList.add("diffAlignment");
+                    }
 
-                    // Todo - alignment, angle
+                    if (compareAttributes(fig1Attributes, fig2Attributes, "angle")) {
+                        score += 4;
+                        fig2AttrList.add("sameAngle");
+                    } else if(fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
+                        score += 3;
+                        int angleDiff = Math.abs(Integer.parseInt(fig2Attributes.get("angle"))
+                                - Integer.parseInt(fig1Attributes.get("angle")));
+                        fig2AttrList.add(Integer.toString(angleDiff));
+                    }
+
 
                 }
 
@@ -217,6 +288,24 @@ public class Agent {
         }
 
         return bestRelationships;
+    }
+
+    public List<String> getLocations(RavensFigure figure) {
+
+        Map<String, RavensObject> figureObjects = figure.getObjects();
+
+        // Get relative locations of each object in the figure
+        List<String> locations = new ArrayList<>();
+        for (String name : figureObjects.keySet()) {
+            Map<String, String> figAttributes = figureObjects.get(name).getAttributes();
+
+            if(figAttributes.get("overlaps") != null)
+                locations.add("overlaps");
+            if(figAttributes.get("inside") != null)
+                locations.add("inside");
+        }
+
+        return locations;
     }
 
     // Todo - implement this comparison

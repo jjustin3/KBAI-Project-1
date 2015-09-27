@@ -36,10 +36,13 @@ public class Generator<E> {
      * @return The list of pairs
      */
     public List<List<E>> formPairs(List<E> list1, List<E> list2) {
-        // Todo - check to see if lists are same size. If not --> exception.
         List<List<E>> pairList = new ArrayList<>();
 
-        for (int i = 0; i < list1.size(); i++) {
+        List<E> tempList = list1;
+        if (list2.size() < list1.size())
+            tempList = list2;
+
+        for (int i = 0; i < tempList.size(); i++) {
             List<E> pair = new ArrayList<>();
             pair.add(list1.get(i));
             pair.add(list2.get(i));
@@ -49,7 +52,7 @@ public class Generator<E> {
         return pairList;
     }
 
-    public <E> List<E> intersection(List<E> list1, List<E> list2) {
+    public List<E> intersection(List<E> list1, List<E> list2) {
         List<E> list = new ArrayList<>();
 
         for (E element : list1) {
