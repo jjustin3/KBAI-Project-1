@@ -65,6 +65,7 @@ public class Agent {
      * @return your Agent's answer to this problem
      */
     public int Solve(RavensProblem problem) {
+        System.out.println(problem.getName()+":");
 
         // Array for potential answers
         List<String> answers = new ArrayList<>();
@@ -82,27 +83,28 @@ public class Agent {
         RavensFigure fig6 = problem.getFigures().get("6");
 
         // Determine relationships between objects in figures
-        Map<String, List<String>>  figAtoFigB = semanticNetwork.formRelationships(figA, figB);
-        Map<String, List<String>>  figCtoFig1 = semanticNetwork.formRelationships(figC, fig1);
-        Map<String, List<String>>  figCtoFig2 = semanticNetwork.formRelationships(figC, fig2);
-        Map<String, List<String>>  figCtoFig3 = semanticNetwork.formRelationships(figC, fig3);
-        Map<String, List<String>>  figCtoFig4 = semanticNetwork.formRelationships(figC, fig4);
-        Map<String, List<String>>  figCtoFig5 = semanticNetwork.formRelationships(figC, fig5);
-        Map<String, List<String>>  figCtoFig6 = semanticNetwork.formRelationships(figC, fig6);
+        Map<String, List<String>>  figAtoFigB = semanticNetwork.formRelationships(figA, figB, problem);
+        Map<String, List<String>>  figCtoFig1 = semanticNetwork.formRelationships(figC, fig1, problem);
+        Map<String, List<String>>  figCtoFig2 = semanticNetwork.formRelationships(figC, fig2, problem);
+        Map<String, List<String>>  figCtoFig3 = semanticNetwork.formRelationships(figC, fig3, problem);
+        Map<String, List<String>>  figCtoFig4 = semanticNetwork.formRelationships(figC, fig4, problem);
+        Map<String, List<String>>  figCtoFig5 = semanticNetwork.formRelationships(figC, fig5, problem);
+        Map<String, List<String>>  figCtoFig6 = semanticNetwork.formRelationships(figC, fig6, problem);
 
         // Store relationships between C and solutions to map
-        Map<String, Map<String, List<String>>> step1sols = new HashMap<>();
-        step1sols.put("1", figCtoFig1);
-        step1sols.put("2", figCtoFig2);
-        step1sols.put("3", figCtoFig3);
-        step1sols.put("4", figCtoFig4);
-        step1sols.put("5", figCtoFig5);
-        step1sols.put("6", figCtoFig6);
+        Map<String, Map<String, List<String>>> step1Sols = new HashMap<>();
+        step1Sols.put("1", figCtoFig1);
+        step1Sols.put("2", figCtoFig2);
+        step1Sols.put("3", figCtoFig3);
+        step1Sols.put("4", figCtoFig4);
+        step1Sols.put("5", figCtoFig5);
+        step1Sols.put("6", figCtoFig6);
 
         // Determine transformations between figures
         int figAtoFigBDiff = figB.getObjects().keySet().size() - figA.getObjects().keySet().size();
+        List<List<List<String>>> figAtoFigBPerms = generator.generatePermutations(new ArrayList(figAtoFigB.values()));
         Map<String, Integer> step1Scores = new HashMap<>();
-        List<String> sol1List = new ArrayList<>(step1sols.keySet());
+        List<String> sol1List = new ArrayList<>(step1Sols.keySet());
         for (String sol : sol1List) {
             step1Scores.put(sol, 0);
 
@@ -110,18 +112,27 @@ public class Agent {
                     - figC.getObjects().keySet().size();
 
             if (figAtoFigBDiff == figCtoSolDiff)
-                step1Scores.put(sol, Math.abs(figCtoSolDiff) + 3);
+                step1Scores.put(sol, Math.abs(figCtoSolDiff) + 6);
 
+            List<List<String>> rels = findBestRelationship(new ArrayList<>(step1Sols.get(sol).values()), figAtoFigBPerms);
+
+//            System.out.println("AtoB: " + figAtoFigB.toString());
+//            System.out.println("Sol"+sol+": "+step1Sols.get(sol).toString());
             for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
-                    new ArrayList<>(figAtoFigB.values()),
-                    new ArrayList<>(step1sols.get(sol).values()))) {
+                    rels,
+                    new ArrayList<>(step1Sols.get(sol).values()))) {
 
+                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10")) {
+//                    System.out.println("AtoB: "+pair.get(0));
+//                    System.out.println("Sol"+sol+": "+pair.get(1));
+                }
                 int tempScore = step1Scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
                 step1Scores.put(sol, tempScore);
             }
         }
 
         for (String sol : sol1List) {
+            System.out.println(sol+": "+step1Scores.get(sol));
             if (step1Scores.get(sol).equals(Collections.max(step1Scores.values())))
                 answers.add(sol);
         }
@@ -141,7 +152,8 @@ public class Agent {
                     answers.remove(sol);
 
         }
-        
+
+        System.out.println(answers);
         if (answers.size() > 1)
             return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
         else if (answers.size() < 1)
@@ -175,5 +187,31 @@ public class Agent {
         }
 
         return locations;
+    }
+
+    public List<List<String>> findBestRelationship(List<List<String>> list1, List<List<List<String>>> permList) {
+        int bestScore = 0;
+        List<List<String>> bestList = new ArrayList<>();
+
+//        System.out.println("L: "+list1);
+//        System.out.println("P: "+permList);
+        for (List<List<String>> p1 : permList) {
+            int score = 0;
+            List<List<String>> smallest = p1;
+            if (list1.size() < smallest.size())
+                smallest = list1;
+
+            for (int i = 0; i < smallest.size(); i++) {
+                score += generator.intersection(p1.get(i), list1.get(i)).size();
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestList = p1;
+            }
+
+        }
+
+        return bestList;
     }
 }

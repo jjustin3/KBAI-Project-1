@@ -28,7 +28,8 @@ public class SemanticNetwork {
      */
     // Todo - pass in baseline relation of A to B for comparison
     public Map<String, List<String>> formRelationships(RavensFigure figure1,
-                                                       RavensFigure figure2) {
+                                                       RavensFigure figure2,
+                                                        RavensProblem problem) {
 
         // Retrieve figure1's objects and figure2's objects for comparison
         HashMap<String, RavensObject> figure1Objects = figure1.getObjects();
@@ -69,24 +70,24 @@ public class SemanticNetwork {
                     HashMap<String, String> fig2Attributes = fig2Object.getAttributes();
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
-                        score += 6;
+                        score += 5;
                         fig2AttrList.add("sameShape");
                     } else if (fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
                         fig2AttrList.add("diffShape");
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
-                        score += 6;
+                        score += 5;
                         fig2AttrList.add("sameSize");
                     } else if (fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
-                        score += 3;
+                        score += 2;
                         fig2AttrList.add("diffSize");
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
-                        score += 6;
+                        score += 5;
                         fig2AttrList.add("sameFill");
                     } else if (fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
-                        score += 3;
+                        score += 2;
                         String fill = "diffFill";
 
                         List<String> hasFill = new ArrayList<>();
@@ -99,10 +100,10 @@ public class SemanticNetwork {
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "alignment")) {
-                        score += 6;
+                        score += 5;
                         fig2AttrList.add("sameAlignment");
                     } else if (fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
-                        score += 3;
+                        score += 2;
                         String align = determineAlignment(
                                 fig1Attributes.get("alignment"), fig2Attributes.get("alignment")
                         );
@@ -110,10 +111,10 @@ public class SemanticNetwork {
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "angle")) {
-                        score += 6;
+                        score += 5;
                         fig2AttrList.add("sameAngle");
                     } else if (fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
-                        score += 3;
+                        score += 2;
                         int angleDiff = Math.abs(Integer.parseInt(fig2Attributes.get("angle"))
                                 - Integer.parseInt(fig1Attributes.get("angle")));
                         fig2AttrList.add(Integer.toString(angleDiff));
@@ -129,6 +130,8 @@ public class SemanticNetwork {
 
             // Todo - check to see if relationship == comparison passed in
             if (score > bestScore) {
+//                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10"))
+//                    System.out.println(figure2.getName()+": "+relationships+" ["+score+"]");
                 bestRelationships = relationships;
                 bestScore = score;
             }
