@@ -114,19 +114,25 @@ public class Agent {
             if (figAtoFigBDiff == figCtoSolDiff)
                 step1Scores.put(sol, Math.abs(figCtoSolDiff) + 6);
 
-            List<List<String>> rels = findBestRelationship(new ArrayList<>(step1Sols.get(sol).values()), figAtoFigBPerms);
+            List<List<String>> rels = findBestRelationship(new ArrayList<>(step1Sols.get(sol).values()), figAtoFigBPerms, problem);
 
-//            System.out.println("AtoB: " + figAtoFigB.toString());
-//            System.out.println("Sol"+sol+": "+step1Sols.get(sol).toString());
+            if(problem.getName().equals("Basic Problem B-10")) {
+                System.out.println("AtoB: " + figAtoFigB.toString());
+                System.out.println("Sol" + sol + ": " + step1Sols.get(sol).toString());
+            }
             for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
                     rels,
                     new ArrayList<>(step1Sols.get(sol).values()))) {
 
-                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10")) {
-//                    System.out.println("AtoB: "+pair.get(0));
-//                    System.out.println("Sol"+sol+": "+pair.get(1));
+//                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10")) {
+                if (problem.getName().equals("Basic Problem B-10")) {
+                    System.out.println("AtoB: "+pair.get(0));
+                    System.out.println("Sol"+sol+": "+pair.get(1));
                 }
+
                 int tempScore = step1Scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
+                if (sol.equals("1") || sol.equals("3"))
+                    System.out.println("Intersection: "+generator.intersection(pair.get(0),pair.get(1)));
                 step1Scores.put(sol, tempScore);
             }
         }
@@ -189,12 +195,10 @@ public class Agent {
         return locations;
     }
 
-    public List<List<String>> findBestRelationship(List<List<String>> list1, List<List<List<String>>> permList) {
+    public List<List<String>> findBestRelationship(List<List<String>> list1, List<List<List<String>>> permList, RavensProblem problem) {
         int bestScore = 0;
         List<List<String>> bestList = new ArrayList<>();
 
-//        System.out.println("L: "+list1);
-//        System.out.println("P: "+permList);
         for (List<List<String>> p1 : permList) {
             int score = 0;
             List<List<String>> smallest = p1;
