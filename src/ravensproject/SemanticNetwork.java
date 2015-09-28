@@ -69,24 +69,24 @@ public class SemanticNetwork {
                     HashMap<String, String> fig2Attributes = fig2Object.getAttributes();
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
-                        score += 5;
+                        score += 6;
                         fig2AttrList.add("sameShape");
                     } else if (fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
                         fig2AttrList.add("diffShape");
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
-                        score += 5;
+                        score += 6;
                         fig2AttrList.add("sameSize");
                     } else if (fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
-                        score += 2;
+                        score += 3;
                         fig2AttrList.add("diffSize");
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
-                        score += 5;
+                        score += 6;
                         fig2AttrList.add("sameFill");
                     } else if (fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
-                        score += 2;
+                        score += 3;
                         String fill = "diffFill";
 
                         List<String> hasFill = new ArrayList<>();
@@ -99,10 +99,10 @@ public class SemanticNetwork {
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "alignment")) {
-                        score += 5;
+                        score += 6;
                         fig2AttrList.add("sameAlignment");
                     } else if (fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
-                        score += 2;
+                        score += 3;
                         String align = determineAlignment(
                                 fig1Attributes.get("alignment"), fig2Attributes.get("alignment")
                         );
@@ -110,10 +110,10 @@ public class SemanticNetwork {
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "angle")) {
-                        score += 5;
+                        score += 6;
                         fig2AttrList.add("sameAngle");
                     } else if (fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
-                        score += 2;
+                        score += 3;
                         int angleDiff = Math.abs(Integer.parseInt(fig2Attributes.get("angle"))
                                 - Integer.parseInt(fig1Attributes.get("angle")));
                         fig2AttrList.add(Integer.toString(angleDiff));

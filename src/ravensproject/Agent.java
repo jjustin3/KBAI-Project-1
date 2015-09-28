@@ -110,7 +110,7 @@ public class Agent {
                     - figC.getObjects().keySet().size();
 
             if (figAtoFigBDiff == figCtoSolDiff)
-                step1Scores.put(sol, Math.abs(figCtoSolDiff) + 2);
+                step1Scores.put(sol, Math.abs(figCtoSolDiff) + 3);
 
             for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
                     new ArrayList<>(figAtoFigB.values()),
@@ -142,6 +142,7 @@ public class Agent {
 
         }
 
+        System.out.println(answers);
         if (answers.size() > 1)
             return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
         else if (answers.size() < 1)
