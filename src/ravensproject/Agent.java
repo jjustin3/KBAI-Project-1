@@ -141,8 +141,7 @@ public class Agent {
                     answers.remove(sol);
 
         }
-
-        System.out.println(answers);
+        
         if (answers.size() > 1)
             return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
         else if (answers.size() < 1)
