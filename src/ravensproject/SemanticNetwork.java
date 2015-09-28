@@ -130,8 +130,6 @@ public class SemanticNetwork {
 
             // Todo - check to see if relationship == comparison passed in
             if (score > bestScore) {
-//                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10"))
-//                    System.out.println(figure2.getName()+": "+relationships+" ["+score+"]");
                 bestRelationships = relationships;
                 bestScore = score;
             }

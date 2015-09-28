@@ -65,7 +65,6 @@ public class Agent {
      * @return your Agent's answer to this problem
      */
     public int Solve(RavensProblem problem) {
-        System.out.println(problem.getName()+":");
 
         // Array for potential answers
         List<String> answers = new ArrayList<>();
@@ -116,29 +115,16 @@ public class Agent {
 
             List<List<String>> rels = findBestRelationship(new ArrayList<>(step1Sols.get(sol).values()), figAtoFigBPerms, problem);
 
-            if(problem.getName().equals("Basic Problem B-10")) {
-                System.out.println("AtoB: " + figAtoFigB.toString());
-                System.out.println("Sol" + sol + ": " + step1Sols.get(sol).toString());
-            }
             for (List<List<String>> pair : (List<List<List<String>>>)generator.formPairs(
                     rels,
                     new ArrayList<>(step1Sols.get(sol).values()))) {
 
-//                if (problem.getName().equals("Basic Problem B-02") || problem.getName().equals("Basic Problem B-06") || problem.getName().equals("Basic Problem B-10")) {
-                if (problem.getName().equals("Basic Problem B-10")) {
-                    System.out.println("AtoB: "+pair.get(0));
-                    System.out.println("Sol"+sol+": "+pair.get(1));
-                }
-
                 int tempScore = step1Scores.get(sol) + generator.intersection(pair.get(0), pair.get(1)).size();
-                if (sol.equals("1") || sol.equals("3"))
-                    System.out.println("Intersection: "+generator.intersection(pair.get(0),pair.get(1)));
                 step1Scores.put(sol, tempScore);
             }
         }
 
         for (String sol : sol1List) {
-            System.out.println(sol+": "+step1Scores.get(sol));
             if (step1Scores.get(sol).equals(Collections.max(step1Scores.values())))
                 answers.add(sol);
         }
@@ -159,9 +145,8 @@ public class Agent {
 
         }
 
-        System.out.println(answers);
         if (answers.size() > 1)
-            return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
+            return Integer.parseInt(answers.get(random.nextInt(answers.size())));
         else if (answers.size() < 1)
             return -1; // for skipping
         return Integer.parseInt(answers.get(0));
@@ -195,6 +180,7 @@ public class Agent {
         return locations;
     }
 
+    // somewhat lost a working product (need to commit more) so this is what I have to resort to :(
     public List<List<String>> findBestRelationship(List<List<String>> list1, List<List<List<String>>> permList, RavensProblem problem) {
         int bestScore = 0;
         List<List<String>> bestList = new ArrayList<>();
