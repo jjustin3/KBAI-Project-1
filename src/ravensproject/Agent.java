@@ -24,6 +24,7 @@ public class Agent {
 
     private Generator generator;
     private Random random;
+    private SemanticNetwork semanticNetwork;
 
     /**
      * The default constructor for your Agent. Make sure to execute any
@@ -36,6 +37,7 @@ public class Agent {
     public Agent() {
         generator = new Generator();
         random = new Random();
+        semanticNetwork = new SemanticNetwork(generator);
     }
     /**
      * The primary method for solving incoming Raven's Progressive Matrices.
@@ -64,11 +66,8 @@ public class Agent {
      */
     public int Solve(RavensProblem problem) {
 
-        System.out.println("Analyzing: "+problem.getName());
-
         // Array for potential answers
         List<String> answers = new ArrayList<>();
-        int answer; // actual answer to return
 
         // Todo - don't hardcode this for 2x2... make dynamic
         // Retrieve figures from problem
@@ -83,13 +82,13 @@ public class Agent {
         RavensFigure fig6 = problem.getFigures().get("6");
 
         // Determine relationships between objects in figures
-        Map<String, List<String>>  figAtoFigB = formRelationships(figA, figB);
-        Map<String, List<String>>  figCtoFig1 = formRelationships(figC, fig1);
-        Map<String, List<String>>  figCtoFig2 = formRelationships(figC, fig2);
-        Map<String, List<String>>  figCtoFig3 = formRelationships(figC, fig3);
-        Map<String, List<String>>  figCtoFig4 = formRelationships(figC, fig4);
-        Map<String, List<String>>  figCtoFig5 = formRelationships(figC, fig5);
-        Map<String, List<String>>  figCtoFig6 = formRelationships(figC, fig6);
+        Map<String, List<String>>  figAtoFigB = semanticNetwork.formRelationships(figA, figB);
+        Map<String, List<String>>  figCtoFig1 = semanticNetwork.formRelationships(figC, fig1);
+        Map<String, List<String>>  figCtoFig2 = semanticNetwork.formRelationships(figC, fig2);
+        Map<String, List<String>>  figCtoFig3 = semanticNetwork.formRelationships(figC, fig3);
+        Map<String, List<String>>  figCtoFig4 = semanticNetwork.formRelationships(figC, fig4);
+        Map<String, List<String>>  figCtoFig5 = semanticNetwork.formRelationships(figC, fig5);
+        Map<String, List<String>>  figCtoFig6 = semanticNetwork.formRelationships(figC, fig6);
 
         // Store relationships between C and solutions to map
         Map<String, Map<String, List<String>>> step1sols = new HashMap<>();
@@ -146,115 +145,8 @@ public class Agent {
         if (answers.size() > 1)
             return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
         else if (answers.size() < 1)
-            return -1;
+            return -1; // for skipping
         return Integer.parseInt(answers.get(0));
-    }
-
-    // Todo - pass in baseline relation of A to B for comparison
-    public Map<String, List<String>> formRelationships(RavensFigure figure1,
-                                                       RavensFigure figure2) {
-
-        // Retrieve figure1's objects and figure2's objects for comparison
-        HashMap<String, RavensObject> figure1Objects = figure1.getObjects();
-        HashMap<String, RavensObject> figure2Objects = figure2.getObjects();
-
-        // Compare number of objects in each figure
-        List<String> figure1Names = new ArrayList<>(figure1Objects.keySet());
-        List<String> figure2Names = new ArrayList<>(figure2Objects.keySet());
-        while (figure1Names.size() != figure2Names.size()) {
-            if (figure1Names.size() > figure2Names.size())
-                figure2Names.add(null);
-            else if (figure1Names.size() < figure2Names.size()) {
-                figure1Names.add(null);
-            }
-        }
-
-        // Get all permutations of figure2 for comparison to figure1
-        List<List<String>> figure2Permutations = generator.generatePermutations(figure2Names);
-
-        int bestScore = 0;
-        Map<String, List<String>> bestRelationships = new HashMap<>();
-        for (List<String> permutation : figure2Permutations) {
-            int score = 0;
-
-            Map<String, List<String>> relationships = new HashMap<>();
-            for (List<String> pair : (List<List<String>>)generator.formPairs(figure1Names, permutation)) {
-                RavensObject fig1Object = figure1Objects.get(pair.get(0));
-                RavensObject fig2Object = figure2Objects.get(pair.get(1));
-                List<String> fig1AttrList = new ArrayList<>();
-                List<String> fig2AttrList = new ArrayList<>();
-
-                if (fig1Object == null && fig2Object != null)
-                    fig2AttrList.add("added");
-                else if (fig1Object != null && fig2Object == null)
-                    fig1AttrList.add("deleted");
-                else if (fig1Object != null && fig2Object != null) {
-                    HashMap<String, String> fig1Attributes = fig1Object.getAttributes();
-                    HashMap<String, String> fig2Attributes = fig2Object.getAttributes();
-
-                    if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
-                        score += 5;
-                        fig2AttrList.add("sameShape");
-                    } else if (fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
-                        fig2AttrList.add("diffShape");
-
-                    if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
-                        score += 5;
-                        fig2AttrList.add("sameSize");
-                    } else if (fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
-                        score += 2;
-                        fig2AttrList.add("diffSize");
-                    }
-
-                    if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
-                        score += 5;
-                        fig2AttrList.add("sameFill");
-                    } else if (fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
-                        score += 2;
-                        String fill = determineFill(
-                                fig1Attributes.get("fill"), fig2Attributes.get("fill")
-                        );
-                        fig2AttrList.add(fill);
-                    }
-
-                    if (compareAttributes(fig1Attributes, fig2Attributes, "alignment")) {
-                        score += 5;
-                        fig2AttrList.add("sameAlignment");
-                    } else if (fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
-                        score += 2;
-                        String align = determineAlignment(
-                                fig1Attributes.get("alignment"), fig2Attributes.get("alignment")
-                        );
-                        fig2AttrList.add(align);
-                    }
-
-                    if (compareAttributes(fig1Attributes, fig2Attributes, "angle")) {
-                        score += 5;
-                        fig2AttrList.add("sameAngle");
-                    } else if (fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
-                        score += 2;
-                        int angleDiff = Math.abs(Integer.parseInt(fig2Attributes.get("angle"))
-                                - Integer.parseInt(fig1Attributes.get("angle")));
-                        fig2AttrList.add(Integer.toString(angleDiff));
-                    }
-
-                }
-
-                if (fig1Object != null && !fig1AttrList.isEmpty())
-                    relationships.put(fig1Object.getName(), fig1AttrList);
-                if (fig2Object != null && !fig2AttrList.isEmpty())
-                    relationships.put(fig2Object.getName(), fig2AttrList);
-            }
-
-            // Todo - check to see if relationship == comparison passed in
-            if (score > bestScore) {
-                bestRelationships = relationships;
-                bestScore = score;
-            }
-
-        }
-
-        return bestRelationships;
     }
 
     public List<String> getLocations(RavensFigure figure) {
@@ -276,88 +168,5 @@ public class Agent {
         }
 
         return locations;
-    }
-
-    /**
-     * This method compares the attributes of each figure. The point is to pull this
-     * logic out of the main algorithm because it is repeated so much.
-     *
-     * @param fig1Attributes
-     * @param fig2Attributes
-     * @param attribute
-     * @return Whether or not the attributes are the same
-     */
-    public boolean compareAttributes (HashMap<String, String> fig1Attributes,
-                                  HashMap<String, String> fig2Attributes,
-                                  String attribute) {
-
-        String fig1Attribute = fig1Attributes.get(attribute);
-        String fig2Attribute = fig2Attributes.get(attribute);
-        if(fig1Attribute != null && fig2Attribute != null)
-            if (fig1Attribute.equals(fig2Attribute))
-                return true;
-        return false;
-    }
-
-    public String determineAlignment(String fig1Align, String fig2Align) {
-        String[] fig1Attrs = fig1Align.split("-");
-        String[] fig2Attrs = fig2Align.split("-");
-        String vertChange = "";
-        String horizChange = "";
-        String change;
-
-        if (fig1Attrs[0].equals("bottom") && fig2Attrs[0].equals("top"))
-            vertChange = "up";
-        else if (fig1Attrs[0].equals("top") && fig2Attrs[0].equals("bottom"))
-            vertChange = "down";
-
-        if (fig1Attrs[1].equals("left") && fig2Attrs[1].equals("right"))
-            horizChange = "right";
-        if (fig1Attrs[1].equals("right") && fig2Attrs[1].equals("left"))
-            horizChange = "left";
-
-        if (!vertChange.equals("") && !horizChange.equals(""))
-            change = vertChange + "-" + horizChange;
-        else
-            change = vertChange + horizChange;
-
-        return change;
-    }
-
-    public String determineFill(String fig1Fill, String fig2Fill) {
-        String[] fig1Attrs = fig1Fill.split("-");
-        String[] fig2Attrs = fig2Fill.split("-");
-        int change = 0; //rotation change in degrees
-
-        if (fig1Attrs[0].equals("bottom")) {
-            switch (fig2Attrs[0]) {
-                case "top":
-                    change = 180;
-                case "right":
-                    change = 90;
-                case "left":
-                    change = 270;
-            }
-        } else if (fig1Attrs[0].equals("top")) {
-            switch (fig2Attrs[0]) {
-                case "bottom" : change = 180;
-                case "right" : change = 270;
-                case "left" : change = 90;
-            }
-        } else if (fig1Attrs[0].equals("left")) {
-            switch (fig2Attrs[0]) {
-                case "top" : change = 270;
-                case "bottom" : change = 90;
-                case "right" : change = 180;
-            }
-        } else if (fig1Attrs[0].equals("right")) {
-            switch (fig2Attrs[0]) {
-                case "top" : change = 90;
-                case "bottom" : change = 270;
-                case "left": change = 180;
-            }
-        }
-
-        return Integer.toString(change);
     }
 }
