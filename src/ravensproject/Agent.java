@@ -23,6 +23,7 @@ import java.util.*;
 public class Agent {
 
     private Generator generator;
+    private Random random;
 
     /**
      * The default constructor for your Agent. Make sure to execute any
@@ -34,6 +35,7 @@ public class Agent {
      */
     public Agent() {
         generator = new Generator();
+        random = new Random();
     }
     /**
      * The primary method for solving incoming Raven's Progressive Matrices.
@@ -66,6 +68,7 @@ public class Agent {
 
         // Array for potential answers
         List<String> answers = new ArrayList<>();
+        int answer; // actual answer to return
 
         // Todo - don't hardcode this for 2x2... make dynamic
         // Retrieve figures from problem
@@ -80,13 +83,13 @@ public class Agent {
         RavensFigure fig6 = problem.getFigures().get("6");
 
         // Determine relationships between objects in figures
-        Map<String, List<String>>  figAtoFigB = formRelationships(figA, figB, null);
-        Map<String, List<String>>  figCtoFig1 = formRelationships(figC, fig1, figAtoFigB);
-        Map<String, List<String>>  figCtoFig2 = formRelationships(figC, fig2, figAtoFigB);
-        Map<String, List<String>>  figCtoFig3 = formRelationships(figC, fig3, figAtoFigB);
-        Map<String, List<String>>  figCtoFig4 = formRelationships(figC, fig4, figAtoFigB);
-        Map<String, List<String>>  figCtoFig5 = formRelationships(figC, fig5, figAtoFigB);
-        Map<String, List<String>>  figCtoFig6 = formRelationships(figC, fig6, figAtoFigB);
+        Map<String, List<String>>  figAtoFigB = formRelationships(figA, figB);
+        Map<String, List<String>>  figCtoFig1 = formRelationships(figC, fig1);
+        Map<String, List<String>>  figCtoFig2 = formRelationships(figC, fig2);
+        Map<String, List<String>>  figCtoFig3 = formRelationships(figC, fig3);
+        Map<String, List<String>>  figCtoFig4 = formRelationships(figC, fig4);
+        Map<String, List<String>>  figCtoFig5 = formRelationships(figC, fig5);
+        Map<String, List<String>>  figCtoFig6 = formRelationships(figC, fig6);
 
         // Store relationships between C and solutions to map
         Map<String, Map<String, List<String>>> step1sols = new HashMap<>();
@@ -98,21 +101,15 @@ public class Agent {
         step1sols.put("6", figCtoFig6);
 
         // Determine transformations between figures
-        int figAtoFigBDiff = figB.getObjects().keySet().size() - figA.getObjects().keySet().size(); //Todo
+        int figAtoFigBDiff = figB.getObjects().keySet().size() - figA.getObjects().keySet().size();
         Map<String, Integer> step1Scores = new HashMap<>();
         List<String> sol1List = new ArrayList<>(step1sols.keySet());
         for (String sol : sol1List) {
             step1Scores.put(sol, 0);
 
-            // Todo - this should go somewhere near the pair formation
-            // i.e. B-12 --> I don't analyze elements of an array at indices
-            // greater than the array being compared to (misses some pairings)
             int figCtoSolDiff = problem.getFigures().get(sol).getObjects().keySet().size()
-                    - figC.getObjects().keySet().size(); //Todo
+                    - figC.getObjects().keySet().size();
 
-            // Todo - ensure this works for given scores!
-            if (problem.getName().equals("Basic Problem B-12"))
-//                System.out.println("AtoB: "+figAtoFigBDiff+" , Cto"+sol+": "+figCtoSolDiff);
             if (figAtoFigBDiff == figCtoSolDiff)
                 step1Scores.put(sol, Math.abs(figCtoSolDiff) + 2);
 
@@ -126,45 +123,14 @@ public class Agent {
         }
 
         for (String sol : sol1List) {
-//            if (problem.getName().equals("Basic Problem B-12"))
-//                System.out.println("Sol"+sol+" points: "+step1Scores.get(sol));
             if (step1Scores.get(sol).equals(Collections.max(step1Scores.values())))
                 answers.add(sol);
         }
 
-        System.out.println("Answers at step 1: "+answers);
-
-        //Todo
         if (answers.size() > 1) {
-//            List<String> figBLocations = getLocations(figB);
-//            List<String> fig1Locations = getLocations(fig1);
-//            List<String> fig2Locations = getLocations(fig2);
-//            List<String> fig3Locations = getLocations(fig3);
-//            List<String> fig4Locations = getLocations(fig4);
-//            List<String> fig5Locations = getLocations(fig5);
-//            List<String> fig6Locations = getLocations(fig6);
-//
-//            Map<String, List<String>> step2sols = new HashMap<>();
-//            step2sols.put("1", fig1Locations);
-//            step2sols.put("2", fig2Locations);
-//            step2sols.put("3", fig3Locations);
-//            step2sols.put("4", fig4Locations);
-//            step2sols.put("5", fig5Locations);
-//            step2sols.put("6", fig6Locations);
-//
-//            List<String> sol2List = new ArrayList<>(step2sols.keySet());
-//            for (String sol : sol2List) {
-//              List<String> ansFigLocations = getLocations(problem.getFigures().get(ans));
-//                int tempScore = generator.intersection(figBLocations, ansFigLocations).size();
-//                step2Scores.put(ans, tempScore);
-//            }
-//            for (String sol : answers)
-//                if (step2Scores.get(sol) < Collections.max(step2Scores.values()))
-//                    answers.remove(sol);
-            
-
             List<String> figBLocations = getLocations(figB);
             Map<String, Integer> step2Scores = new HashMap<>();
+
             for (String ans : answers) {
                 List<String> ansFigLocations = getLocations(problem.getFigures().get(ans));
                 int tempScore = generator.intersection(figBLocations, ansFigLocations).size();
@@ -177,16 +143,16 @@ public class Agent {
 
         }
 
-        System.out.println("Answers at step 2: "+answers);
-
-
-
-        return -1;
+        if (answers.size() > 1)
+            return Integer.parseInt(answers.get(random.nextInt(answers.size() - 1)));
+        else if (answers.size() < 1)
+            return -1;
+        return Integer.parseInt(answers.get(0));
     }
 
+    // Todo - pass in baseline relation of A to B for comparison
     public Map<String, List<String>> formRelationships(RavensFigure figure1,
-                                                       RavensFigure figure2,
-                                                       Map<String, List<String>> comparison) {
+                                                       RavensFigure figure2) {
 
         // Retrieve figure1's objects and figure2's objects for comparison
         HashMap<String, RavensObject> figure1Objects = figure1.getObjects();
@@ -229,13 +195,13 @@ public class Agent {
                     if (compareAttributes(fig1Attributes, fig2Attributes, "shape")) {
                         score += 5;
                         fig2AttrList.add("sameShape");
-                    } else if(fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
+                    } else if (fig1Attributes.get("shape") != null && fig2Attributes.get("shape") != null)
                         fig2AttrList.add("diffShape");
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "size")) {
                         score += 5;
                         fig2AttrList.add("sameSize");
-                    } else if(fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
+                    } else if (fig1Attributes.get("size") != null && fig2Attributes.get("size") != null) {
                         score += 2;
                         fig2AttrList.add("diffSize");
                     }
@@ -243,29 +209,34 @@ public class Agent {
                     if (compareAttributes(fig1Attributes, fig2Attributes, "fill")) {
                         score += 5;
                         fig2AttrList.add("sameFill");
-                    } else if(fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
+                    } else if (fig1Attributes.get("fill") != null && fig2Attributes.get("fill") != null) {
                         score += 2;
-                        fig2AttrList.add("diffFill");
+                        String fill = determineFill(
+                                fig1Attributes.get("fill"), fig2Attributes.get("fill")
+                        );
+                        fig2AttrList.add(fill);
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "alignment")) {
                         score += 5;
                         fig2AttrList.add("sameAlignment");
-                    } else if(fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
+                    } else if (fig1Attributes.get("alignment") != null && fig2Attributes.get("alignment") != null) {
                         score += 2;
-                        fig2AttrList.add("diffAlignment");
+                        String align = determineAlignment(
+                                fig1Attributes.get("alignment"), fig2Attributes.get("alignment")
+                        );
+                        fig2AttrList.add(align);
                     }
 
                     if (compareAttributes(fig1Attributes, fig2Attributes, "angle")) {
-                        score += 4;
+                        score += 5;
                         fig2AttrList.add("sameAngle");
-                    } else if(fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
-                        score += 3;
+                    } else if (fig1Attributes.get("angle") != null && fig2Attributes.get("angle") != null) {
+                        score += 2;
                         int angleDiff = Math.abs(Integer.parseInt(fig2Attributes.get("angle"))
                                 - Integer.parseInt(fig1Attributes.get("angle")));
                         fig2AttrList.add(Integer.toString(angleDiff));
                     }
-
 
                 }
 
@@ -275,15 +246,11 @@ public class Agent {
                     relationships.put(fig2Object.getName(), fig2AttrList);
             }
 
-            // Todo - check if this works (probably doesn't) --> make a comparison function (check if comparison is null)
-            if (relationships == comparison)
-                score += 100;
+            // Todo - check to see if relationship == comparison passed in
             if (score > bestScore) {
                 bestRelationships = relationships;
                 bestScore = score;
-
             }
-            //compareRelationships(relationships, comparison);
 
         }
 
@@ -291,7 +258,6 @@ public class Agent {
     }
 
     public List<String> getLocations(RavensFigure figure) {
-
         Map<String, RavensObject> figureObjects = figure.getObjects();
 
         // Get relative locations of each object in the figure
@@ -303,35 +269,14 @@ public class Agent {
                 locations.add("overlaps");
             if(figAttributes.get("inside") != null)
                 locations.add("inside");
+            if(figAttributes.get("above") != null)
+                locations.add("above");
+            if(figAttributes.get("left-of") != null)
+                locations.add("left-of");
         }
 
         return locations;
     }
-
-    // Todo - implement this comparison
-    public boolean compareRelationships(Map<String, List<String>> relationship1,
-                                        Map<String, List<String>> relationship2) {
-
-        if(relationship1 != null && relationship2 != null) {
-            List<List<String>> rel1Values = new ArrayList<>(relationship1.values());
-            List<List<String>> rel2Values = new ArrayList<>(relationship2.values());
-            List<List<List<String>>> permutations = generator.generatePermutations(rel2Values);
-//            System.out.println(permutations);
-            for (List<List<String>> permutation : permutations) {
-                boolean same = true;
-                for (int i = 0; i < rel1Values.size(); i++) {
-                    if (!rel1Values.get(i).equals(permutation.get(i)))
-                        same = false;
-                    else
-                        System.out.println(rel1Values + " ::: " + permutation);
-                }
-            }
-
-        }
-        return false;
-    }
-
-
 
     /**
      * This method compares the attributes of each figure. The point is to pull this
@@ -352,5 +297,67 @@ public class Agent {
             if (fig1Attribute.equals(fig2Attribute))
                 return true;
         return false;
+    }
+
+    public String determineAlignment(String fig1Align, String fig2Align) {
+        String[] fig1Attrs = fig1Align.split("-");
+        String[] fig2Attrs = fig2Align.split("-");
+        String vertChange = "";
+        String horizChange = "";
+        String change;
+
+        if (fig1Attrs[0].equals("bottom") && fig2Attrs[0].equals("top"))
+            vertChange = "up";
+        else if (fig1Attrs[0].equals("top") && fig2Attrs[0].equals("bottom"))
+            vertChange = "down";
+
+        if (fig1Attrs[1].equals("left") && fig2Attrs[1].equals("right"))
+            horizChange = "right";
+        if (fig1Attrs[1].equals("right") && fig2Attrs[1].equals("left"))
+            horizChange = "left";
+
+        if (!vertChange.equals("") && !horizChange.equals(""))
+            change = vertChange + "-" + horizChange;
+        else
+            change = vertChange + horizChange;
+
+        return change;
+    }
+
+    public String determineFill(String fig1Fill, String fig2Fill) {
+        String[] fig1Attrs = fig1Fill.split("-");
+        String[] fig2Attrs = fig2Fill.split("-");
+        int change = 0; //rotation change in degrees
+
+        if (fig1Attrs[0].equals("bottom")) {
+            switch (fig2Attrs[0]) {
+                case "top":
+                    change = 180;
+                case "right":
+                    change = 90;
+                case "left":
+                    change = 270;
+            }
+        } else if (fig1Attrs[0].equals("top")) {
+            switch (fig2Attrs[0]) {
+                case "bottom" : change = 180;
+                case "right" : change = 270;
+                case "left" : change = 90;
+            }
+        } else if (fig1Attrs[0].equals("left")) {
+            switch (fig2Attrs[0]) {
+                case "top" : change = 270;
+                case "bottom" : change = 90;
+                case "right" : change = 180;
+            }
+        } else if (fig1Attrs[0].equals("right")) {
+            switch (fig2Attrs[0]) {
+                case "top" : change = 90;
+                case "bottom" : change = 270;
+                case "left": change = 180;
+            }
+        }
+
+        return Integer.toString(change);
     }
 }

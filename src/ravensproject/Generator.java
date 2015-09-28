@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by justinjackson on 9/26/15.
+ * This is a generator class for all helper functions that need to
+ * be generic.
  */
 public class Generator<E> {
 
@@ -36,6 +37,11 @@ public class Generator<E> {
      * @return The list of pairs
      */
     public List<List<E>> formPairs(List<E> list1, List<E> list2) {
+
+        // Todo - figure out better way to make sure everything paired
+        // i.e. B-12 --> If one list bigger than other, certain pairs
+        // are not formed that could be useful
+
         List<List<E>> pairList = new ArrayList<>();
 
         List<E> tempList = list1;
