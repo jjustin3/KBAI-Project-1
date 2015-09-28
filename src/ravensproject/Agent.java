@@ -149,6 +149,13 @@ public class Agent {
         return Integer.parseInt(answers.get(0));
     }
 
+    /**
+     * This method gets the locations of the objects in the figure relative
+     * to one-another.
+     *
+     * @param figure
+     * @return The list of relative locations contained in the figure
+     */
     public List<String> getLocations(RavensFigure figure) {
         Map<String, RavensObject> figureObjects = figure.getObjects();
 
